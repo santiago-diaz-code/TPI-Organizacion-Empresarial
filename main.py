@@ -13,6 +13,9 @@ Simulador de Chatbot para Gestión de Vacaciones usando Máquina de Estados"""
 import os
 #Importamos 'sys' para poder cerrar el programa limpiamente cuando el usuario escribe 'salir'
 import sys
+#Importamos 'datetime' para la robustez en la validación de fechas.
+from datetime import datetime
+
 
 #Archivos de Persistencia (Base de Datos simuladas en Excel)
 BD_EMPLEADOS = "empleados.csv" #Archivo que contiene legajos, nombres y saldos 
@@ -38,6 +41,16 @@ datos_usuario = {
 }
 
 #Lectura y Escritura de archivos (funciones auxiliares)
+
+#Función auxiliar para validar que la fecha sea real
+def validar_fecha(fecha_str):
+  try:
+    #Intenta convertir el texto en una fecha real
+    datetime.strptime(fecha_str, "%d/%m/%Y")
+    return True #Si la fecha es válida y existe en el calendario
+  except ValueError:
+    return False #Si la fecha ingresada no es válida, se muestra el error y devuelve False.
+
 def buscar_empleado(legajo_buscado):
   #Si el archivo de empleados no existe, no se puede continuar con la validación del Legajo
   if not os.path.exists(BD_EMPLEADOS):
@@ -168,10 +181,13 @@ def procesar_chatbot(entrada):
 
   #--PASO 3: Capturar Fecha--
   elif estado_actual == ESTADO_FECHA:
-    if len(entrada) != 10 or entrada[2] != '/' or entrada[5] != '/':
-      print("\n[Bot]: Formato de fecha incorrecto. Use el formato DD/MM/AAAA (Ej: 15/10/2026):")
-      return #Mantiene al usuario en el mismo state hasta que escriba bien la fecha.
-
+    #Llamado a la función de validación de fecha
+    if not validar_fecha(entrada):
+      print("\n[Bot]: ERROR: La fecha ingresada no es válida o no existe en el calendario.")
+      print("[Bot]: Por favor, use el formato DD/MM/AAAA (Ej: 19/06/2026):")
+      return #Mantiene al usuario en este paso hasta que ingrese una fecha válida.
+    
+    #Si pasa la validación, continúa el flujo feliz original:
     datos_usuario["fecha_inicio"] = entrada
     print("\n" + "="*40)
     print("RESUMEN DE TU SOLICITUD")
